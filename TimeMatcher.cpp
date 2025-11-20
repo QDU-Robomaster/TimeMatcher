@@ -1,21 +1,15 @@
 #include "TimeMatcher.hpp"
 
-#include <opencv2/core/quaternion.hpp>
-
-#include "libxr_def.hpp"
 #include "message.hpp"
-TimeMatcher::TimeMatcher(LibXR::HardwareContainer& hw, LibXR::ApplicationManager& app,
-                         const range& img, const range& imu)
-    : differ_t((img.dn - imu.up).count(), (img.up - imu.dn).count())
+TimeMatcher::TimeMatcher(LibXR::HardwareContainer&, LibXR::ApplicationManager& app,
+                         const Range& img, const Range& imu)
+    : DIFFER_T(img.dn - imu.up, img.up - imu.dn)
 {
-  UNUSED(hw);
-
-  //   LibXR::Topic::QueuedSubscriber sub("imu_topic", this->ImuQueue, sizeof(UartDataT));
   auto topic = LibXR::Topic::Find("imu_topic");
   auto image_topic = LibXR::Topic(LibXR::Topic::Find("image_topic"));
-  this->image_imu_topic = LibXR::Topic::CreateTopic<ImageAndImu>("image_imu_topic");
+  this->image_imu_topic_ = LibXR::Topic::CreateTopic<ImageAndImu>("image_imu_topic");
 
-  auto imu_sub = LibXR::Topic::QueuedSubscriber(topic, this->ImuQueue);
+  auto imu_sub = LibXR::Topic::QueuedSubscriber(topic, this->imu_queue_);
 
   auto image_cb = LibXR::Topic::Callback::Create(
       [](bool, TimeMatcher* self, LibXR::RawData& data)
@@ -36,30 +30,36 @@ void TimeMatcher::MatcherCallback(HikCamera::ImageData* img_msg)
   auto& image_time = (*img_msg).time;
   while (true)
   {
-    UartDataT Udata;
+    UartDataT uart_data;
 
-    LibXR::ErrorCode ans = this->ImuQueue.Peek(Udata);
+    LibXR::ErrorCode ans = this->imu_queue_.Peek(uart_data);
 
-    if (ans == LibXR::ErrorCode::EMPTY) break;
-
-    auto& imu_time = Udata.time;
-
-    auto differ = image_time - imu_time;
-
-    if (differ < differ_t.dn) continue;  // 图片是旧的，丢弃照片
-
-    if (differ > differ_t.up)  // imu数据是旧的，丢弃imu数据
+    if (ans == LibXR::ErrorCode::EMPTY)
     {
-      ImuQueue.Pop();
+      break;
+    }
+
+    auto& imu_time = uart_data.time;
+
+    int64_t differ = static_cast<int64_t>(image_time) - static_cast<int64_t>(imu_time);
+
+    if (differ < DIFFER_T.dn)
+    {
+      continue;  // 图片是旧的，丢弃照片
+    }
+
+    if (differ > DIFFER_T.up)  // imu数据是旧的，丢弃imu数据
+    {
+      this->imu_queue_.Pop();
       continue;
     }
     // 配对成功
     ImageAndImu data;
     data.image = (*img_msg).image;
-    data.Quat = cv::Quatf(Udata.data.Quat[0], Udata.data.Quat[1], Udata.data.Quat[2],
-                          Udata.data.Quat[3]);
-    data.time = Udata.time;
-    this->ImuQueue.Pop();
-    this->image_imu_topic.Publish(data);
+    data.Quat = cv::Quatf(uart_data.data.Quat[0], uart_data.data.Quat[1],
+                          uart_data.data.Quat[2], uart_data.data.Quat[3]);
+    data.time = uart_data.time;
+    this->imu_queue_.Pop();
+    this->image_imu_topic_.Publish(data);
   }
 }

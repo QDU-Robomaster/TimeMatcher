@@ -10,13 +10,12 @@ depends: []
 === END MANIFEST === */
 // clang-format on
 
-#include <chrono>
 #include <iostream>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/quaternion.hpp>
 
-#include "../HikCamera/HikCamera.hpp"
-#include "../UartDataProcess/UartDataProcess.hpp"
+#include "HikCamera.hpp"
+#include "UartDataProcess.hpp"
 #include "app_framework.hpp"
 #include "lockfree_queue.hpp"
 #include "message.hpp"
@@ -25,34 +24,38 @@ struct ImageAndImu
 {
   cv::Mat image;
   cv::Quatf Quat;
-  std::chrono::steady_clock::time_point time;
+  LibXR::MicrosecondTimestamp time;
 };
 
 class TimeMatcher : public LibXR::Application
 {
  public:
-  struct range
+  struct Range
   {
-    std::chrono::milliseconds up, dn;
-    range(unsigned u, unsigned d)
+    // 使用 int64_t 存储微秒，以支持原始逻辑中的差值计算
+    int64_t up, dn;
+    Range(unsigned u, unsigned d)
     {
       if (u >= d)
       {
-        std::cerr << "TimeMatcher::range that up >= dn \n";
+        XR_LOG_ERROR("TimeMatcher::range that up >= dn \n");
         exit(10);
       }
-      this->up = std::chrono::milliseconds(u);
-      this->dn = std::chrono::milliseconds(d);
+      // 原始入参为毫秒，转换为微秒
+      this->up = static_cast<int64_t>(u) * 1000;
+      this->dn = static_cast<int64_t>(d) * 1000;
     }
+    // 内部构造函数，用于 differ_t 初始化 (已经计算好的微秒值)
+    Range(int64_t u, int64_t d) : up(u), dn(d) {}
   };
   TimeMatcher(LibXR::HardwareContainer& hw, LibXR::ApplicationManager& app,
-              const range& img, const range& imu);
+              const Range& img, const Range& imu);
 
   void OnMonitor() override {}
 
  private:
-  const range differ_t;
-  LibXR::Topic image_imu_topic;
-  LibXR::LockFreeQueue<UartDataT> ImuQueue{3};
+  const Range DIFFER_T;
+  LibXR::Topic image_imu_topic_;
+  LibXR::LockFreeQueue<UartDataT> imu_queue_{3};
   void MatcherCallback(HikCamera::ImageData* img_msg);
 };
