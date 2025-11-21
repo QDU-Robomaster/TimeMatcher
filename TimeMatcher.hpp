@@ -3,14 +3,14 @@
 // clang-format off
 /* === MODULE MANIFEST V2 ===
 module_description: Subscriber image_topic and imu_topic to matcher theis timepoint then publish to image_data_topic
-constructor_args: 
-  - img: 
-    - up: 100
-    - dn: 50
-    
-  - imu: 
-    - up: 100
-    - dn: 50
+constructor_args:
+  img:
+    up: 100
+    dn: 50
+
+  imu:
+    up: 100
+    dn: 50
 template_args: []
 required_hardware: []
 depends: 
@@ -19,6 +19,7 @@ depends:
 === END MANIFEST === */
 // clang-format on
 
+#include <cstdint>
 #include <iostream>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/quaternion.hpp>
@@ -43,19 +44,7 @@ class TimeMatcher : public LibXR::Application
   {
     // 使用 int64_t 存储微秒，以支持原始逻辑中的差值计算
     int64_t up, dn;
-    Range(unsigned u, unsigned d)
-    {
-      if (u >= d)
-      {
-        XR_LOG_ERROR("TimeMatcher::range that up >= dn \n");
-        exit(10);
-      }
-      // 原始入参为毫秒，转换为微秒
-      this->up = static_cast<int64_t>(u) * 1000;
-      this->dn = static_cast<int64_t>(d) * 1000;
-    }
-    // 内部构造函数，用于 differ_t 初始化 (已经计算好的微秒值)
-    Range(int64_t u, int64_t d) : up(u), dn(d) {}
+    Range(int64_t u, int64_t d) : up(u * 1000), dn(d * 1000) {}
   };
   TimeMatcher(LibXR::HardwareContainer& hw, LibXR::ApplicationManager& app,
               const Range& img, const Range& imu);
