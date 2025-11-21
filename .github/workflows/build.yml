@@ -72,7 +72,7 @@ jobs:
 
       - name: Add module
         run: |
-          xrobot_add_mod qdu-future/HikCamera && xrobot_add_mod qdu-future/${{ env.XR_MODULE_NAME }} && xrobot_add_mod qdu-future/UartDateProcess
+          xrobot_add_mod qdu-future/HikCamera && xrobot_add_mod qdu-future/${{ env.XR_MODULE_NAME }} && xrobot_add_mod qdu-future/UartDatasProcess
 
       - name: Run xrobot_init_mod
         run: |
