@@ -56,8 +56,7 @@ void TimeMatcher::MatcherCallback(HikCamera::ImageData* img_msg)
     // 配对成功
     ImageAndImu data;
     data.image = (*img_msg).image;
-    data.Quat = cv::Quatf(uart_data.data.Quat[0], uart_data.data.Quat[1],
-                          uart_data.data.Quat[2], uart_data.data.Quat[3]);
+    data.Quat = uart_data.data.Quat;
     data.time = uart_data.time;
     this->imu_queue_.Pop();
     this->image_imu_topic_.Publish(data);

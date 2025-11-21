@@ -23,7 +23,7 @@ depends: []
 struct ImageAndImu
 {
   cv::Mat image;
-  cv::Quatf Quat;
+  LibXR::Quaternion<float> Quat;
   LibXR::MicrosecondTimestamp time;
 };
 

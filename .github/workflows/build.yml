@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: '0 3 1 * *'  # 每月1日凌晨3点（UTC）自动触发
+    - cron: "0 3 1 * *" # 每月1日凌晨3点（UTC）自动触发
 
 jobs:
   build:
@@ -81,6 +81,10 @@ jobs:
       - name: Add this repo module
         run: |
           xrobot_add_mod ${{ env.XR_MODULE_NAME }} && cat User/xrobot.yaml
+
+      - name: Change branch
+        run: |
+          cd Module/HikCamera && git checkout dev && cd ../../
 
       - name: Generate main again
         run: |
