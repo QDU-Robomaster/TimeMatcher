@@ -82,10 +82,6 @@ jobs:
         run: |
           xrobot_add_mod ${{ env.XR_MODULE_NAME }} && cat User/xrobot.yaml
 
-      - name: Change branch
-        run: |
-          cd Module/HikCamera && git checkout dev && cd ../../
-
       - name: Generate main again
         run: |
           xrobot_setup

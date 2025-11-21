@@ -14,7 +14,7 @@ constructor_args:
 template_args: []
 required_hardware: []
 depends: 
-  - qdu-future/HikCamera
+  - qdu-future/HikCamera@dev
   - qdu-future/UartDataProcess
 === END MANIFEST === */
 // clang-format on
