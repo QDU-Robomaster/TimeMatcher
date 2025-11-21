@@ -3,10 +3,19 @@
 // clang-format off
 /* === MODULE MANIFEST V2 ===
 module_description: Subscriber image_topic and imu_topic to matcher theis timepoint then publish to image_data_topic
-constructor_args: []
+constructor_args: 
+  - img: 
+    - up: 100
+    - dn: 50
+    
+  - imu: 
+    - up: 100
+    - dn: 50
 template_args: []
 required_hardware: []
-depends: []
+depends: 
+  - qdu-future/HikCamera
+  - qdu-future/UartDataProcess
 === END MANIFEST === */
 // clang-format on
 
